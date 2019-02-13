@@ -6,6 +6,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -48,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
     CompositeDisposable compositeDisposable;
     RecyclerView countryListRv;
     ProgressBar loadingProgressBar;
+    Button retryBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,12 +57,22 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         ((AppController) getApplication()).getRepositoryComponent().inject(this);
         compositeDisposable = new CompositeDisposable();
-        countryListRv = findViewById(R.id.country_list_rv);
-        loadingProgressBar = findViewById(R.id.loading_progress_bar);
-        countryListRv.setHasFixedSize(true);
-        countryListRv.setLayoutManager(new LinearLayoutManager(this));
+
+        initViews();
+        initRecyclerView();
 
         isDatabaseEmpty();
+    }
+
+    private void initViews() {
+        countryListRv = findViewById(R.id.country_list_rv);
+        loadingProgressBar = findViewById(R.id.loading_progress_bar);
+        retryBtn = findViewById(R.id.retry_btn);
+
+        retryBtn.setOnClickListener(v -> {
+            retryBtn.setVisibility(View.GONE);
+            isDatabaseEmpty();
+        });
     }
 
 
@@ -81,11 +93,7 @@ public class MainActivity extends AppCompatActivity {
                         if (countries.size() < 1) {
                             getCountriesFromApi();
                         } else {
-                            CountryAdapter countryAdapter = new CountryAdapter(MainActivity.this, countries);
-                            countryAdapter.setClickListener(country -> {
-                                Toast.makeText(MainActivity.this, "Population is : " + country.getPopulation(), Toast.LENGTH_LONG).show();
-                            });
-                            countryListRv.setAdapter(countryAdapter);
+                            fillRecyclerView(countries);
                         }
                     }
 
@@ -117,11 +125,8 @@ public class MainActivity extends AppCompatActivity {
                     public void onComplete() {
                         Log.i(TAG, "FUNCTION : saveCountriesListToDatabase => onComplete => Saved Successfully");
                         hideLoadingAndShowRecyclerView();
-                        CountryAdapter countryAdapter = new CountryAdapter(MainActivity.this, countries);
-                        countryAdapter.setClickListener(country -> {
-                            Toast.makeText(MainActivity.this, "Population is : " + country.getPopulation(), Toast.LENGTH_LONG).show();
-                        });
-                        countryListRv.setAdapter(countryAdapter);
+                        fillRecyclerView(countries);
+
                     }
 
                     @Override
@@ -156,8 +161,23 @@ public class MainActivity extends AppCompatActivity {
                         e.printStackTrace();
                         Log.e(TAG, "FUNCTION : getCountriesFromApi => onError => " + e.toString());
                         hideLoadingAndShowRecyclerView();
+                        retryBtn.setVisibility(View.VISIBLE);
+                        Toast.makeText(MainActivity.this, "خطا در برقراری ارتباط...", Toast.LENGTH_LONG).show();
                     }
                 });
+    }
+
+    private void initRecyclerView() {
+        countryListRv.setHasFixedSize(true);
+        countryListRv.setLayoutManager(new LinearLayoutManager(this));
+    }
+
+    private void fillRecyclerView(List<Country> countries) {
+        CountryAdapter countryAdapter = new CountryAdapter(MainActivity.this, countries);
+        countryAdapter.setClickListener(country -> {
+            Toast.makeText(MainActivity.this, "Population is : " + String.format("%,d",Long.parseLong(String.valueOf(country.getPopulation()))), Toast.LENGTH_LONG).show();
+        });
+        countryListRv.setAdapter(countryAdapter);
     }
 
     private void showLoadingAndHideRecyclerView() {
@@ -175,5 +195,10 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
         compositeDisposable.dispose();
         compositeDisposable.clear();
+    }
+
+    @Override
+    public void onBackPressed() {
+        finish();
     }
 }

@@ -11,12 +11,8 @@ import java.util.List;
 
 import babadi.countrypedia.data.model.Country;
 import io.reactivex.Completable;
-import io.reactivex.CompletableEmitter;
-import io.reactivex.CompletableOnSubscribe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import io.reactivex.SingleEmitter;
-import io.reactivex.SingleOnSubscribe;
 
 public class DbHelper extends SQLiteOpenHelper implements CountryDAO {
 
@@ -26,9 +22,10 @@ public class DbHelper extends SQLiteOpenHelper implements CountryDAO {
     private String COUNTRY_NAME = "country_name";
     private String COUNTRY_CAPITAL_NAME = "country_capital_name";
     private String COUNTRY_POPULATION = "country_population";
+    private String COUNTRY_FLAG = "country_flag";
 
     private String CREATE_TABLE = "CREATE TABLE " + TBL_NAME + "(" + COUNTRY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
-            COUNTRY_NAME + " NVARCHAR(200)," + COUNTRY_CAPITAL_NAME + " TEXT, " + COUNTRY_POPULATION + " BIGINT);";
+            COUNTRY_NAME + " NVARCHAR(200)," + COUNTRY_CAPITAL_NAME + " TEXT, " + COUNTRY_POPULATION + " BIGINT, " + COUNTRY_FLAG + " TEXT);";
 
     public DbHelper(Context context, String name, int version) {
         super(context, name, null, version);
@@ -54,6 +51,7 @@ public class DbHelper extends SQLiteOpenHelper implements CountryDAO {
             values.put(COUNTRY_NAME, country.getName());
             values.put(COUNTRY_CAPITAL_NAME, country.getCapital());
             values.put(COUNTRY_POPULATION, country.getPopulation());
+            values.put(COUNTRY_FLAG, country.getFlag());
             db.insert(TBL_NAME, null, values);
             emitter.onComplete();
         });
@@ -70,6 +68,7 @@ public class DbHelper extends SQLiteOpenHelper implements CountryDAO {
                     values.put(COUNTRY_NAME, country.getNativeName());
                     values.put(COUNTRY_CAPITAL_NAME, country.getCapital());
                     values.put(COUNTRY_POPULATION, country.getPopulation());
+                    values.put(COUNTRY_FLAG, country.getFlag());
                     long rowId = db.insert(TBL_NAME, null, values);
                     emitter.onNext(rowId);
                 }
@@ -104,6 +103,7 @@ public class DbHelper extends SQLiteOpenHelper implements CountryDAO {
                 country.setNativeName(cursor.getString(cursor.getColumnIndex(COUNTRY_NAME)));
                 country.setCapital(cursor.getString(cursor.getColumnIndex(COUNTRY_CAPITAL_NAME)));
                 country.setPopulation(cursor.getInt(cursor.getColumnIndex(COUNTRY_POPULATION)));
+                country.setFlag(cursor.getString(cursor.getColumnIndex(COUNTRY_FLAG)));
                 countries.add(country);
             }
             cursor.close();

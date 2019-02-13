@@ -1,6 +1,7 @@
 package babadi.countrypedia.util;
 
 import android.app.Application;
+import android.support.v7.app.AppCompatDelegate;
 
 import babadi.countrypedia.BuildConfig;
 import babadi.countrypedia.di.component.DaggerRepositoryComponent;
@@ -15,6 +16,8 @@ public class AppController extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
 
         repositoryComponent = DaggerRepositoryComponent.builder()
                 .appModule(new AppModule(this))

@@ -1,6 +1,6 @@
 package babadi.countrypedia.ui.adapters;
 
-import android.content.Context;
+import android.app.Activity;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -9,6 +9,8 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.ahmadrosid.svgloader.SvgLoader;
+
 import java.util.List;
 
 import babadi.countrypedia.R;
@@ -16,16 +18,16 @@ import babadi.countrypedia.data.model.Country;
 
 public class CountryAdapter extends RecyclerView.Adapter<CountryAdapter.MVHolder> {
 
-    Context context;
+    Activity activity;
     List<Country> countryList;
     OnItemClickListener itemClickListener;
 
-    public CountryAdapter(Context context, List<Country> countryList) {
-        this.context = context;
+    public CountryAdapter(Activity activity, List<Country> countryList) {
+        this.activity = activity;
         this.countryList = countryList;
     }
 
-    public class MVHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
+    public class MVHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         TextView countryName;
         TextView capitalName;
         ImageView countryFlag;
@@ -50,7 +52,7 @@ public class CountryAdapter extends RecyclerView.Adapter<CountryAdapter.MVHolder
     @NonNull
     @Override
     public MVHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.item_country, parent, false);
+        View view = LayoutInflater.from(activity).inflate(R.layout.item_country, parent, false);
         return new MVHolder(view);
     }
 
@@ -59,6 +61,12 @@ public class CountryAdapter extends RecyclerView.Adapter<CountryAdapter.MVHolder
         Country country = countryList.get(position);
         holder.countryName.setText(country.getNativeName());
         holder.capitalName.setText(country.getCapital());
+
+
+        SvgLoader.pluck()
+                .with(activity)
+                .setPlaceHolder(R.drawable.error_loading, R.drawable.error_loading)
+                .load(country.getFlag(), holder.countryFlag);
 
     }
 
