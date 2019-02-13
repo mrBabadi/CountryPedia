@@ -2,8 +2,13 @@ package babadi.countrypedia.ui.activities;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +19,8 @@ import babadi.countrypedia.R;
 import babadi.countrypedia.data.local.DbHelper;
 import babadi.countrypedia.data.model.Country;
 import babadi.countrypedia.data.remote.CountryBI;
+import babadi.countrypedia.ui.adapters.CountryAdapter;
+import babadi.countrypedia.ui.adapters.OnItemClickListener;
 import babadi.countrypedia.util.AppController;
 import io.reactivex.CompletableObserver;
 import io.reactivex.Observable;
@@ -39,6 +46,8 @@ public class MainActivity extends AppCompatActivity {
     DbHelper dbHelper;
 
     CompositeDisposable compositeDisposable;
+    RecyclerView countryListRv;
+    ProgressBar loadingProgressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +55,10 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         ((AppController) getApplication()).getRepositoryComponent().inject(this);
         compositeDisposable = new CompositeDisposable();
+        countryListRv = findViewById(R.id.country_list_rv);
+        loadingProgressBar = findViewById(R.id.loading_progress_bar);
+        countryListRv.setHasFixedSize(true);
+        countryListRv.setLayoutManager(new LinearLayoutManager(this));
 
         isDatabaseEmpty();
     }
@@ -68,7 +81,11 @@ public class MainActivity extends AppCompatActivity {
                         if (countries.size() < 1) {
                             getCountriesFromApi();
                         } else {
-                            //todo show lists in recyclerView
+                            CountryAdapter countryAdapter = new CountryAdapter(MainActivity.this, countries);
+                            countryAdapter.setClickListener(country -> {
+                                Toast.makeText(MainActivity.this, "Population is : " + country.getPopulation(), Toast.LENGTH_LONG).show();
+                            });
+                            countryListRv.setAdapter(countryAdapter);
                         }
                     }
 
@@ -99,11 +116,17 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onComplete() {
                         Log.i(TAG, "FUNCTION : saveCountriesListToDatabase => onComplete => Saved Successfully");
-                        //todo show list in recyclerView
+                        hideLoadingAndShowRecyclerView();
+                        CountryAdapter countryAdapter = new CountryAdapter(MainActivity.this, countries);
+                        countryAdapter.setClickListener(country -> {
+                            Toast.makeText(MainActivity.this, "Population is : " + country.getPopulation(), Toast.LENGTH_LONG).show();
+                        });
+                        countryListRv.setAdapter(countryAdapter);
                     }
 
                     @Override
                     public void onError(Throwable e) {
+                        hideLoadingAndShowRecyclerView();
                         Log.e(TAG, "FUNCTION : saveCountriesListToDatabase => onError => " + e.toString());
                         e.printStackTrace();
                     }
@@ -112,6 +135,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void getCountriesFromApi() {
         Log.i(TAG, "FUNCTION : getCountriesFromApi");
+        showLoadingAndHideRecyclerView();
         retrofit.create(CountryBI.class).getCountries()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -131,8 +155,19 @@ public class MainActivity extends AppCompatActivity {
                     public void onError(Throwable e) {
                         e.printStackTrace();
                         Log.e(TAG, "FUNCTION : getCountriesFromApi => onError => " + e.toString());
+                        hideLoadingAndShowRecyclerView();
                     }
                 });
+    }
+
+    private void showLoadingAndHideRecyclerView() {
+        loadingProgressBar.setVisibility(View.VISIBLE);
+        countryListRv.setVisibility(View.GONE);
+    }
+
+    private void hideLoadingAndShowRecyclerView() {
+        loadingProgressBar.setVisibility(View.GONE);
+        countryListRv.setVisibility(View.VISIBLE);
     }
 
     @Override
